@@ -1,7 +1,9 @@
 package io.icker.factions.ui;
 
 import io.icker.factions.util.Localization;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -171,8 +173,34 @@ public class FactionsMenu implements MenuProvider {
         }
 
         private void syncElement(int index, @Nullable GuiElement element) {
-            this.getSlot(index).set(element == null ? ItemStack.EMPTY : element.getItemStack());
+            this.getSlot(index).set(element == null ? ItemStack.EMPTY : resolveStack(element));
             this.broadcastChanges();
+        }
+
+        /**
+         * Resolves the element's name and lore server-side on a copy (the client does not
+         * have this mod's lang files). Elements are rebuilt per page turn, so each sync
+         * re-resolves from the original translatable components.
+         */
+        private ItemStack resolveStack(GuiElement element) {
+            ItemStack stack = element.getItemStack().copy();
+            String language = FactionsMenu.this.player.getLanguage();
+
+            Component name = stack.get(DataComponents.CUSTOM_NAME);
+            if (name != null) {
+                stack.set(DataComponents.CUSTOM_NAME, Localization.resolve(name, language));
+            }
+
+            ItemLore lore = stack.get(DataComponents.LORE);
+            if (lore != null) {
+                stack.set(
+                        DataComponents.LORE,
+                        new ItemLore(
+                                lore.lines().stream()
+                                        .map(line -> Localization.resolve(line, language))
+                                        .toList()));
+            }
+            return stack;
         }
 
         @Override

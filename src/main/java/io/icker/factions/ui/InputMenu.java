@@ -104,14 +104,30 @@ public class InputMenu implements MenuProvider {
                 inputItem.set(DataComponents.CUSTOM_NAME, Component.literal(InputMenu.this.defaultValue));
             }
             this.getSlot(INPUT_SLOT).set(inputItem);
-            this.getSlot(ADDITIONAL_SLOT)
-                    .set(InputMenu.this.returnBtn == null ? ItemStack.EMPTY : InputMenu.this.returnBtn.getItemStack());
-            this.getSlot(RESULT_SLOT)
-                    .set(InputMenu.this.confirmBtn == null ? ItemStack.EMPTY : InputMenu.this.confirmBtn.getItemStack());
+            this.getSlot(ADDITIONAL_SLOT).set(resolveButton(InputMenu.this.returnBtn));
+            this.getSlot(RESULT_SLOT).set(resolveButton(InputMenu.this.confirmBtn));
         }
 
         private void markProgrammaticClose() {
             this.programmaticClose = true;
+        }
+
+        /**
+         * Resolves the button's name server-side, in place (NOT a copy: InputGui's
+         * showErrorMessage mutates this same stack later to flash error messages).
+         */
+        private ItemStack resolveButton(GuiElement button) {
+            if (button == null) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack stack = button.getItemStack();
+            Component name = stack.get(DataComponents.CUSTOM_NAME);
+            if (name != null) {
+                stack.set(
+                        DataComponents.CUSTOM_NAME,
+                        Localization.resolve(name, InputMenu.this.player.getLanguage()));
+            }
+            return stack;
         }
 
         @Override
