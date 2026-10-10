@@ -12,7 +12,8 @@
         "ServerPlayerMixin",
         "ServerGamePacketListenerImplMixin",
         "ServerPlayerGameModeMixin",
-        "ServerExplosionMixin"
+        "ServerExplosionMixin",
+        "PlayerListMixin"
     ],
     "injectors": {
         "defaultRequire": 1
