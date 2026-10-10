@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
  * callback, and nothing can ever be picked up, moved or dropped, matching
  * sgui's behaviour for this mod.
  */
-public abstract class FactionsMenu implements MenuProvider {
+public class FactionsMenu implements MenuProvider {
     /** Implemented by the inner menus so other GUI classes can mark the currently open one. */
     protected interface MarkableClose {
         void markProgrammaticClose();
@@ -86,7 +86,7 @@ public abstract class FactionsMenu implements MenuProvider {
     }
 
     /** Re-sends every element stack to the open menu. */
-    public void updateDisplay() {
+    protected void updateDisplay() {
         if (this.activeMenu != null) {
             this.activeMenu.syncAll();
         }

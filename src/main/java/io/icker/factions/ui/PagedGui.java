@@ -1,0 +1,191 @@
+package io.icker.factions.ui;
+
+import io.icker.factions.util.GuiInteract;
+import io.icker.factions.util.Icons;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import org.jspecify.annotations.Nullable;
+
+// Ported from the sgui-based original (shamelessly stolen in turn from Get off My Lawn
+// https://github.com/Patbox/get-off-my-lawn-reserved)
+public abstract class PagedGui extends FactionsMenu {
+    public static final int PAGE_SIZE = 9 * 4;
+    protected final Runnable closeCallback;
+    protected int page = 0;
+    public boolean ignoreCloseCallback;
+
+    public PagedGui(ServerPlayer player, @Nullable Runnable closeCallback) {
+        super(MenuType.GENERIC_9x5, player, 45);
+        this.closeCallback = closeCallback;
+    }
+
+    public void refreshOpen() {
+        this.updateDisplay();
+        this.open();
+    }
+
+    @Override
+    public void onManualClose() {
+        if (this.closeCallback != null && !ignoreCloseCallback) {
+            this.closeCallback.run();
+        }
+    }
+
+    protected void nextPage() {
+        this.page = Math.min(this.getPageAmount() - 1, this.page + 1);
+        this.updateDisplay();
+    }
+
+    protected boolean canNextPage() {
+        return this.getPageAmount() > this.page + 1;
+    }
+
+    protected void previousPage() {
+        this.page = Math.max(0, this.page - 1);
+        this.updateDisplay();
+    }
+
+    protected boolean canPreviousPage() {
+        return this.page - 1 >= 0;
+    }
+
+    protected void updateDisplay() {
+        var offset = this.page * PAGE_SIZE;
+
+        for (int i = 0; i < PAGE_SIZE; i++) {
+            var element = this.getElement(offset + i);
+
+            if (element == null) {
+                element = DisplayElement.empty();
+            }
+
+            this.setSlot(i, element.element());
+        }
+
+        for (int i = 0; i < 9; i++) {
+            var navElement = this.getNavElement(i);
+
+            if (navElement == null) {
+                navElement = DisplayElement.EMPTY;
+            }
+
+            this.setSlot(i + PAGE_SIZE, navElement.element());
+        }
+    }
+
+    protected int getPage() {
+        return this.page;
+    }
+
+    protected abstract int getPageAmount();
+
+    protected abstract DisplayElement getElement(int id);
+
+    protected DisplayElement getNavElement(int id) {
+        return switch (id) {
+            case 1 -> DisplayElement.previousPage(this);
+            case 3 -> DisplayElement.nextPage(this);
+            case 7 ->
+                    DisplayElement.of(
+                            new GuiElement(Items.STRUCTURE_VOID)
+                                    .setName(
+                                            Component.translatable(
+                                                            this.closeCallback != null
+                                                                    ? "factions.gui.generic.back"
+                                                                    : "factions.gui.generic.close")
+                                                    .withStyle(ChatFormatting.RED))
+                                    .hideDefaultTooltip()
+                                    .setCallback(
+                                            (index, clickType) -> {
+                                                playClickSound(this.player);
+                                                this.close(this.closeCallback != null);
+                                            }));
+            default -> DisplayElement.filler();
+        };
+    }
+
+    public record DisplayElement(@Nullable GuiElement element) {
+        private static final DisplayElement EMPTY =
+                DisplayElement.of(GuiElement.from(ItemStack.EMPTY));
+        // Port note: 26.1.2 has no Items#pick families (added in 26.2/26.3); the concrete
+        // white pane item is used instead.
+        private static final DisplayElement FILLER =
+                DisplayElement.of(
+                        new GuiElement(Items.WHITE_STAINED_GLASS_PANE)
+                                .setName(Component.empty())
+                                .hideTooltip());
+
+        public static DisplayElement of(GuiElement element) {
+            return new DisplayElement(element);
+        }
+
+        public static DisplayElement nextPage(PagedGui gui) {
+            if (gui.canNextPage()) {
+                return DisplayElement.of(
+                        new GuiElement(Items.PLAYER_HEAD)
+                                .setName(
+                                        Component.translatable("factions.gui.generic.next_page")
+                                                .withStyle(ChatFormatting.WHITE))
+                                .hideDefaultTooltip()
+                                .setProfileSkinTexture(Icons.GUI_NEXT_PAGE)
+                                .setCallback(
+                                        (index, clickType) -> {
+                                            playClickSound(gui.player);
+                                            gui.nextPage();
+                                        }));
+            } else {
+                return DisplayElement.of(
+                        new GuiElement(Items.PLAYER_HEAD)
+                                .setName(
+                                        Component.translatable("factions.gui.generic.next_page")
+                                                .withStyle(ChatFormatting.DARK_GRAY))
+                                .hideDefaultTooltip()
+                                .setProfileSkinTexture(Icons.GUI_NEXT_PAGE_BLOCKED));
+            }
+        }
+
+        public static DisplayElement previousPage(PagedGui gui) {
+            if (gui.canPreviousPage()) {
+                return DisplayElement.of(
+                        new GuiElement(Items.PLAYER_HEAD)
+                                .setName(
+                                        Component.translatable("factions.gui.generic.previous_page")
+                                                .withStyle(ChatFormatting.WHITE))
+                                .hideDefaultTooltip()
+                                .setProfileSkinTexture(Icons.GUI_PREVIOUS_PAGE)
+                                .setCallback(
+                                        (index, clickType) -> {
+                                            playClickSound(gui.player);
+                                            gui.previousPage();
+                                        }));
+            } else {
+                return DisplayElement.of(
+                        new GuiElement(Items.PLAYER_HEAD)
+                                .setName(
+                                        Component.translatable("factions.gui.generic.previous_page")
+                                                .withStyle(ChatFormatting.DARK_GRAY))
+                                .hideDefaultTooltip()
+                                .setProfileSkinTexture(Icons.GUI_PREVIOUS_PAGE_BLOCKED));
+            }
+        }
+
+        public static DisplayElement filler() {
+            return FILLER;
+        }
+
+        public static DisplayElement empty() {
+            return EMPTY;
+        }
+    }
+
+    public static final void playClickSound(ServerPlayer player) {
+        GuiInteract.playSound(player, SoundEvents.UI_BUTTON_CLICK.value(), 1f, 1f);
+    }
+}

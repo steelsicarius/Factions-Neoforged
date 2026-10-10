@@ -3,6 +3,11 @@ package io.icker.factions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import io.icker.factions.command.AdminCommand;
+import io.icker.factions.command.InfoCommand;
+import io.icker.factions.command.ListCommand;
+import io.icker.factions.command.MemberCommand;
+import io.icker.factions.command.ModifyCommand;
 import io.icker.factions.command.ClaimCommand;
 import io.icker.factions.command.CreateCommand;
 import io.icker.factions.command.DeclareCommand;
@@ -46,7 +51,7 @@ public class FactionsMod {
     public static Config CONFIG = Config.load();
 
     // TODO (Fase 5): dynmap/bluemap/squaremap wrappers + PlaceholdersWrapper init.
-    // TODO (Fase 4): AdminCommand, InfoCommand, MemberCommand, ModifyCommand (GUI/sgui).
+    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers + PlaceholdersWrapper init.
 
     public FactionsMod() {
         LOGGER.info("Initialized Factions Mod");
@@ -76,23 +81,25 @@ public class FactionsMod {
 
         Command[] commands =
                 new Command[] {
+                    new AdminCommand(),
                     new ClaimCommand(),
                     new CreateCommand(),
                     new DeclareCommand(),
                     new DisbandCommand(),
                     new HomeCommand(),
+                    new InfoCommand(),
                     new InviteCommand(),
                     new JoinCommand(),
                     new KickCommand(),
                     new LeaveCommand(),
+                    new ListCommand(),
                     new MapCommand(),
+                    new MemberCommand(),
+                    new ModifyCommand(),
                     new PermissionCommand(),
                     new RankCommand(),
                     new SafeCommand(),
-                    new SettingsCommand(),
-                    // TODO (Fase 4): new AdminCommand(), new InfoCommand(),
-                    //                 new MemberCommand(), new ModifyCommand() (sgui).
-                    // TODO (Fase 4): new ListCommand() (sgui).
+                    new SettingsCommand()
                 };
 
         for (Command command : commands) {
