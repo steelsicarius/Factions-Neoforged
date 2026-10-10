@@ -1,7 +1,10 @@
 package io.icker.factions.ui;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -84,13 +87,17 @@ public class GuiElement {
      * to a player head item.
      */
     public GuiElement setProfileSkinTexture(String base64Payload) {
-        // authlib 7.x (MC 26.x): GameProfile exposes its property map via the record-style
-        // properties() accessor.
+        // Port note (authlib 7, MC 26.x): GameProfile's property map is immutable and
+        // PropertyMap#put always throws UnsupportedOperationException. The texture
+        // property must be added to the backing multimap BEFORE wrapping it into the
+        // profile (verified against authlib 7.0.63 at runtime).
+        Multimap<String, Property> properties = HashMultimap.create();
+        properties.put("textures", new Property("textures", base64Payload));
         GameProfile profile =
                 new GameProfile(
                         UUID.nameUUIDFromBytes(base64Payload.getBytes(StandardCharsets.UTF_8)),
-                        "factions_gui");
-        profile.properties().put("textures", new Property("textures", base64Payload));
+                        "factions_gui",
+                        new PropertyMap(properties));
         return this.setProfile(profile);
     }
 
