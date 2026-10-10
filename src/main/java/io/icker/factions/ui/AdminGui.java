@@ -128,9 +128,8 @@ public class AdminGui extends FactionsMenu {
                                 }));
 
         // Port note: the original added a 5th "reload dynmap" button when the dynmap wrapper
-        // was active (FactionsMod.dynmap != null); dynmap has no NeoForge build for 26.1,
-        // so the wrapper is always null in this port and the button never rendered.
-        // TODO (Fase 5): re-add the button when the wrappers land.
+        // was active; the dynmap integration was removed from this port (dynmap has no
+        // NeoForge build for 26.1), so the button does not exist either.
         this.open();
     }
 
