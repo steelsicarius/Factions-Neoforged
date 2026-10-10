@@ -1,0 +1,45 @@
+# neoforge.mods.toml template for the Factions port.
+# The ${...} placeholders are expanded by the generateModMetadata task in build.gradle.
+
+# The license of the mod. Mandatory.
+license="${mod_license}"
+
+# A URL to refer people to when problems occur with this mod
+issueTrackerURL="https://github.com/ickerio/factions/issues"
+
+[[mods]]
+# The modid of the mod
+modId="${mod_id}"
+# The version number of the mod
+version="${mod_version}"
+# A display name for the mod
+displayName="${mod_name}"
+# A URL for the "homepage" for this mod, displayed in the mod UI
+displayURL="https://icker.io/factions/"
+# A file name (in the root of the mod JAR) containing a logo for display
+logoFile="assets/factions/icon.png"
+# The authors of the mod
+authors="ickerio, BlueZeeKing, PyPylia"
+# The description text for the mod
+description='''
+Highly customizable, lightweight and elegant Factions mod
+'''
+
+# The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
+# Enabled when the mixins are ported over.
+#[[mixins]]
+#config="${mod_id}.mixins.json"
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
