@@ -57,17 +57,17 @@ Have an issue or a suggestion? Join [our discord][discord]
 
 ## Port a NeoForge 26.1.2 — notas de build
 
-- El runtime del sistema en `/usr/java/jdk-25-oracle-aarch64` es una **instalación recortada**
-  (solo `java`/`jcmd`/`keytool`; sin `javac` ni `lib/ct.sym`), por lo que **no puede compilar
-  con `--release 25`** (ModDevGradle lo necesita para recompilar los artefactos de Minecraft).
-- Usar el JDK 25 completo (Temurin, descargado por el auto-provisioning de Gradle):
+- **Requisito**: un JDK 25 *completo* (con `javac` y `lib/ct.sym`); una instalación recortada
+  sin `ct.sym` falla con `release version 25 not supported` al recompilar los artefactos de
+  Minecraft (ModDevGradle usa `--release 25`). El JDK del sistema en
+  `/usr/java/jdk-25-oracle-aarch64` ya es completo:
 
   ```bash
-  JAVA_HOME=~/.gradle/jdks/eclipse_adoptium-25-aarch64-linux.2 ./gradlew build
+  JAVA_HOME=/usr/java/jdk-25-oracle-aarch64 ./gradlew build
   ```
 
-- Alternativa a largo plazo: instalar un Oracle JDK 25 completo en el sistema.
-
-- El paquete `git` del sistema desapareció a mitad de sesión; se usa git 2.52.0 de espacio
-  de usuario vía `~/.local/bin/git` (wrapper que fija `GIT_EXEC_PATH=~/.git-user/usr/libexec/git-core`,
-  RPMs extraídos en `~/git-user`). Con root disponible conviene restaurar el paquete del sistema.
+  (Durante parte del desarrollo se usó el Temurin 25 auto-provisionado por Gradle en
+  `~/.gradle/jdks/`, válido como alternativa.)
+- Nota de entorno: el paquete `git` del sistema desapareció transitoriamente durante una
+  sesión (posiblemente tras un `dnf update`); fue restaurado manualmente. El historial del
+  repo nunca se vio afectado.
