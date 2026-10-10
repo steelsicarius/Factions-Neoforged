@@ -5,6 +5,7 @@ import io.icker.factions.api.persistents.Claim;
 import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.User;
 import io.icker.factions.util.Message;
+import io.icker.factions.util.WorldUtils;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -21,6 +22,11 @@ public class ServerManager {
     }
 
     private static void save(MinecraftServer server) {
+        // Defensive: the persistents load lazily on first touch; before WorldUtils has
+        // the server reference their (inventory) deserializer cannot resolve registries.
+        if (!WorldUtils.isReady()) {
+            return;
+        }
         Claim.save();
         Faction.save();
         User.save();

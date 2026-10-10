@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 
 import org.jspecify.annotations.Nullable;
 
@@ -31,11 +31,17 @@ public class WorldUtils {
                             });
 
     public static void register() {
-        // Fabric original: ServerLifecycleEvents.SERVER_STARTING
-        NeoForge.EVENT_BUS.addListener(WorldUtils::serverStarting);
+        // Fabric original: ServerLifecycleEvents.SERVER_STARTING. On NeoForge the closest
+        // event is ServerAboutToStartEvent: vanilla DedicatedServer#initServer calls
+        // saveEverything -> saveAllChunks (which triggers Faction's lazy DB load through
+        // our saveAllChunks mixin) AFTER handleServerAboutToStart and loadLevel, so the
+        // server field must be set in AboutToStart, before any of that. ServerStartingEvent
+        // fires too late (after initServer), which crashed the server on the first boot
+        // with existing faction data.
+        NeoForge.EVENT_BUS.addListener(WorldUtils::serverAboutToStart);
     }
 
-    private static void serverStarting(ServerStartingEvent event) {
+    private static void serverAboutToStart(ServerAboutToStartEvent event) {
         WorldUtils.server = event.getServer();
         ON_READY.invoker().onReady();
     }
