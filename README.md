@@ -71,3 +71,8 @@ Have an issue or a suggestion? Join [our discord][discord]
 - Nota de entorno: el paquete `git` del sistema desapareció transitoriamente durante una
   sesión (posiblemente tras un `dnf update`); fue restaurado manualmente. El historial del
   repo nunca se vio afectado.
+
+- **Test en runtime** (`./gradlew runServer`): el server llega a `Done` con el mod y los 10 mixins
+  aplicados, sin errores, y genera `config/factions.json` + `factions/*.dat`.
+- En esta máquina hay otro proceso escuchando en `0.0.0.0:25565`; usar `server-port=25599`
+  (y `server-ip=127.0.0.1`, sin IPv6 usable) en `run/server.properties` para pruebas locales.
