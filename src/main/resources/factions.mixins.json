@@ -1,0 +1,12 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "io.icker.factions.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "CombatTrackerAccessor"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

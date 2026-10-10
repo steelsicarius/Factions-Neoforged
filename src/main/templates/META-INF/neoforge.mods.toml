@@ -26,9 +26,9 @@ Highly customizable, lightweight and elegant Factions mod
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
-# Enabled when the mixins are ported over.
-#[[mixins]]
-#config="${mod_id}.mixins.json"
+# The config file itself lists the ported mixins incrementally.
+[[mixins]]
+config="${mod_id}.mixins.json"
 
 [[dependencies.${mod_id}]]
     modId="neoforge"
