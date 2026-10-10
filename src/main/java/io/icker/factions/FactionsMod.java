@@ -31,6 +31,7 @@ import io.icker.factions.core.SoundManager;
 import io.icker.factions.core.WorldManager;
 import io.icker.factions.util.BlueMapWrapper;
 import io.icker.factions.util.Command;
+import io.icker.factions.util.Permissions;
 import io.icker.factions.util.SquareMapWrapper;
 import io.icker.factions.util.PlaceholdersWrapper;
 import io.icker.factions.util.WorldUtils;
@@ -65,6 +66,10 @@ public class FactionsMod {
         LOGGER.info("Initialized Factions Mod");
 
         WorldUtils.register();
+
+        // NeoForge requires permission nodes to be registered before the first query
+        // (see Permissions.gatherNodes); this must be registered before server start.
+        NeoForge.EVENT_BUS.addListener(Permissions::gatherNodes);
 
         // Fabric original: FabricLoader...isModLoaded("bluemap") / ("squaremap")
         bluemap = ModList.get().isLoaded("bluemap") ? new BlueMapWrapper() : null;

@@ -8,10 +8,13 @@ import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
 
 import net.neoforged.neoforge.server.permission.PermissionAPI;
+import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,7 +32,91 @@ import java.util.Map;
 public final class Permissions {
     private static final Map<String, PermissionNode<Boolean>> NODES = new HashMap<>();
 
+    /**
+     * Every permission node queried via {@link #check}, with its default command level.
+     * NeoForge requires nodes to be registered via {@link PermissionGatherEvent.Nodes} before
+     * being queried (it throws {@code UnregisteredPermissionException} otherwise), so this
+     * list must cover all {@code Requires.hasPerms} call sites in the mod.
+     */
+    private static final String[][] PERMISSIONS = {
+        {"faction.safe", "0"}, // (sic) historical typo kept for config compatibility
+        {"factions.claim.access", "0"},
+        {"factions.claim.access.decrease", "0"},
+        {"factions.claim.access.increase", "0"},
+        {"factions.claim.add", "0"},
+        {"factions.claim.add.force", "0"},
+        {"factions.claim.add.size", "0"},
+        {"factions.claim.auto", "0"},
+        {"factions.claim.list", "0"},
+        {"factions.claim.remove", "0"},
+        {"factions.claim.remove.all", "0"},
+        {"factions.claim.remove.size", "0"},
+        {"factions.create", "0"},
+        {"factions.declare.ally", "0"},
+        {"factions.declare.enemy", "0"},
+        {"factions.declare.neutral", "0"},
+        {"factions.disband", "0"},
+        {"factions.home", "0"},
+        {"factions.home.set", "0"},
+        {"factions.info", "0"},
+        {"factions.info.other", "0"},
+        {"factions.invite.add", "0"},
+        {"factions.invite.list", "0"},
+        {"factions.invite.remove", "0"},
+        {"factions.join", "0"},
+        {"factions.kick", "0"},
+        {"factions.leave", "0"},
+        {"factions.list", "0"},
+        {"factions.map", "0"},
+        {"factions.members", "0"},
+        {"factions.members.other", "0"},
+        {"factions.modify.color", "0"},
+        {"factions.modify.description", "0"},
+        {"factions.modify.gui", "0"},
+        {"factions.modify.motd", "0"},
+        {"factions.modify.name", "0"},
+        {"factions.modify.open", "0"},
+        {"factions.permission", "0"},
+        {"factions.permission.add", "0"},
+        {"factions.permission.add.faction", "0"},
+        {"factions.permission.add.guest", "0"},
+        {"factions.permission.list", "0"},
+        {"factions.permission.list.faction", "0"},
+        {"factions.permission.list.guest", "0"},
+        {"factions.permission.remove", "0"},
+        {"factions.permission.remove.faction", "0"},
+        {"factions.permission.remove.guest", "0"},
+        {"factions.rank.demote", "0"},
+        {"factions.rank.promote", "0"},
+        {"factions.rank.transfer", "0"},
+        {"factions.settings", "0"},
+        {"factions.settings.chat", "0"},
+        {"factions.settings.radar", "0"},
+        {"factions.settings.sounds", "0"},
+        {"factions.admin.gui", null},
+        {"factions.admin.bypass", null},
+        {"factions.admin.power", null},
+        {"factions.admin.spoof", null},
+        {"factions.admin.audit", null},
+    };
+
     private Permissions() {}
+
+    /**
+     * Registers every permission node with NeoForge. Wired in FactionsMod's constructor;
+     * the Nodes event fires when the permission handler initializes (server start).
+     */
+    public static void gatherNodes(PermissionGatherEvent.Nodes event) {
+        List<PermissionNode<?>> nodes = new ArrayList<>(PERMISSIONS.length);
+        for (String[] definition : PERMISSIONS) {
+            int defaultValue =
+                    definition[1] == null
+                            ? FactionsMod.CONFIG.REQUIRED_BYPASS_LEVEL
+                            : Integer.parseInt(definition[1]);
+            nodes.add(node(definition[0], defaultValue));
+        }
+        event.addNodes(nodes);
+    }
 
     public static boolean check(CommandSourceStack source, String permission, int defaultValue) {
         ServerPlayer player = source.getPlayer();
