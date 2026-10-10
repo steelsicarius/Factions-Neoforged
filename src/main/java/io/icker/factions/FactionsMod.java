@@ -75,12 +75,16 @@ public class FactionsMod {
         bluemap = ModList.get().isLoaded("bluemap") ? new BlueMapWrapper() : null;
         squaremap = ModList.get().isLoaded("squaremap") ? new SquareMapWrapper() : null;
 
-        // Fabric original: FabricLoader...isModLoaded("placeholder-api"). The NeoForge port of
-        // the Text Placeholder API publishes under modid "placeholder-api-neoforge" (Modrinth),
-        // so both ids are checked.
+        // Fabric original: FabricLoader...isModLoaded("placeholder-api"). Multiple ports of
+        // Patbox's Text Placeholder API exist for NeoForge with different mod ids:
+        // "placeholder-api-neoforge" (Modrinth, OffsetMonkey538) and "placeholderapi"
+        // (github.com/downloadableduck/textplaceholderapi-neoforge) — all of them expose the
+        // same eu.pb4.placeholders API, so any of them works.
         if (ModList.get().isLoaded("placeholder-api")
-                || ModList.get().isLoaded("placeholder-api-neoforge")) {
+                || ModList.get().isLoaded("placeholder-api-neoforge")
+                || ModList.get().isLoaded("placeholderapi")) {
             PlaceholdersWrapper.init();
+            LOGGER.info("Text Placeholder API detected; factions placeholders registered");
         }
         ChatManager.register();
         InteractionManager.register();
