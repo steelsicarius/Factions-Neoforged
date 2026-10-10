@@ -67,3 +67,7 @@ Have an issue or a suggestion? Join [our discord][discord]
   ```
 
 - Alternativa a largo plazo: instalar un Oracle JDK 25 completo en el sistema.
+
+- El paquete `git` del sistema desapareció a mitad de sesión; se usa git 2.52.0 de espacio
+  de usuario vía `~/.local/bin/git` (wrapper que fija `GIT_EXEC_PATH=~/.git-user/usr/libexec/git-core`,
+  RPMs extraídos en `~/git-user`). Con root disponible conviene restaurar el paquete del sistema.
