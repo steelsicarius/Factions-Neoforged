@@ -52,3 +52,18 @@ Have an issue or a suggestion? Join [our discord][discord]
 [wiki:config]: https://github.com/ickerio/factions/wiki/Config
 [wiki:commands]: https://github.com/ickerio/factions/wiki/Commands
 [discord]: https://discord.gg/tHPFegeAY8
+
+---
+
+## Port a NeoForge 26.1.2 — notas de build
+
+- El runtime del sistema en `/usr/java/jdk-25-oracle-aarch64` es una **instalación recortada**
+  (solo `java`/`jcmd`/`keytool`; sin `javac` ni `lib/ct.sym`), por lo que **no puede compilar
+  con `--release 25`** (ModDevGradle lo necesita para recompilar los artefactos de Minecraft).
+- Usar el JDK 25 completo (Temurin, descargado por el auto-provisioning de Gradle):
+
+  ```bash
+  JAVA_HOME=~/.gradle/jdks/eclipse_adoptium-25-aarch64-linux.2 ./gradlew build
+  ```
+
+- Alternativa a largo plazo: instalar un Oracle JDK 25 completo en el sistema.

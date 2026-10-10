@@ -1,5 +1,5 @@
 # neoforge.mods.toml template for the Factions port.
-# The ${...} placeholders are expanded by the generateModMetadata task in build.gradle.
+# The placeholder expressions below are expanded by the generateModMetadata task in build.gradle.
 
 # The license of the mod. Mandatory.
 license="${mod_license}"
