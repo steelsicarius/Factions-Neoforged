@@ -10,7 +10,9 @@
         "EnderChestBlockMixin",
         "MinecraftServerMixin",
         "ServerPlayerMixin",
-        "ServerGamePacketListenerImplMixin"
+        "ServerGamePacketListenerImplMixin",
+        "ServerPlayerGameModeMixin",
+        "ServerExplosionMixin"
     ],
     "injectors": {
         "defaultRequire": 1
