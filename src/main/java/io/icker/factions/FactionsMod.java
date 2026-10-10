@@ -18,7 +18,9 @@ import io.icker.factions.command.RankCommand;
 import io.icker.factions.command.SafeCommand;
 import io.icker.factions.command.SettingsCommand;
 import io.icker.factions.config.Config;
+import io.icker.factions.core.ChatManager;
 import io.icker.factions.core.FactionsManager;
+import io.icker.factions.core.InteractionManager;
 import io.icker.factions.core.ServerManager;
 import io.icker.factions.core.SoundManager;
 import io.icker.factions.core.WorldManager;
@@ -50,8 +52,8 @@ public class FactionsMod {
         LOGGER.info("Initialized Factions Mod");
 
         WorldUtils.register();
-        // TODO (Fase 2): ChatManager.register() — needs ServerChatEvent + PlayerListMixin.
-        // TODO (Fase 2): InteractionManager.register() — needs NeoForge interaction events.
+        ChatManager.register();
+        InteractionManager.register();
         FactionsManager.register();
         ServerManager.register();
         SoundManager.register();
