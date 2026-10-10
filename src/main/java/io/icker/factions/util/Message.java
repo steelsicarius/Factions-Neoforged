@@ -1,6 +1,7 @@
 package io.icker.factions.util;
 
 import io.icker.factions.api.persistents.Faction;
+import io.icker.factions.util.Localization;
 import io.icker.factions.api.persistents.User;
 
 import net.minecraft.ChatFormatting;
@@ -72,10 +73,16 @@ public class Message {
     }
 
     public Message send(Player player, boolean actionBar) {
+        // Port note: resolve server-side (clients do not have this mod installed, so
+        // they cannot translate our lang keys themselves).
+        Component text =
+                player instanceof ServerPlayer serverPlayer
+                        ? Localization.resolve(this.text, serverPlayer)
+                        : this.text;
         if (actionBar) {
-            player.sendOverlayMessage(this.text);
+            player.sendOverlayMessage(text);
         } else {
-            player.sendSystemMessage(this.text);
+            player.sendSystemMessage(text);
         }
         return this;
     }
@@ -92,14 +99,15 @@ public class Message {
     public void sendToGlobalChat() {
         for (ServerPlayer player : manager.getPlayers()) {
             User.ChatMode option = User.get(player.getUUID()).chat;
-            if (option != User.ChatMode.FOCUS) player.sendSystemMessage(text);
+            if (option != User.ChatMode.FOCUS)
+                player.sendSystemMessage(Localization.resolve(text, player));
         }
     }
 
     public void sendToFactionChat(Faction faction) {
         for (User member : faction.getUsers()) {
             ServerPlayer player = manager.getPlayer(member.getID());
-            player.sendSystemMessage(text);
+            player.sendSystemMessage(Localization.resolve(text, player));
         }
     }
 

@@ -5,6 +5,7 @@ import io.icker.factions.api.events.PlayerEvents;
 import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.User;
 import io.icker.factions.util.Message;
+import io.icker.factions.util.Localization;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -67,26 +68,30 @@ public abstract class ServerPlayerMixin extends LivingEntity {
             if (member.isInFaction()) {
                 Faction faction = member.getFaction();
                 cir.setReturnValue(
-                        new Message(String.format("[%s] ", faction.getName()))
-                                .format(faction.getColor())
-                                .add(
-                                        new Message(
-                                                        ((ServerPlayer) (Object) this)
-                                                                .getName()
-                                                                .getString())
-                                                .format(ChatFormatting.WHITE))
-                                .raw());
+                        Localization.resolve(
+                                new Message(String.format("[%s] ", faction.getName()))
+                                        .format(faction.getColor())
+                                        .add(
+                                                new Message(
+                                                                ((ServerPlayer) (Object) this)
+                                                                        .getName()
+                                                                        .getString())
+                                                        .format(ChatFormatting.WHITE))
+                                        .raw(),
+                                (ServerPlayer) (Object) this));
             } else {
                 cir.setReturnValue(
-                        new Message(Component.translatable("factions.factionless"))
-                                .format(ChatFormatting.GRAY)
-                                .add(
-                                        new Message(
-                                                        ((ServerPlayer) (Object) this)
-                                                                .getName()
-                                                                .getString())
-                                                .format(ChatFormatting.WHITE))
-                                .raw());
+                        Localization.resolve(
+                                new Message(Component.translatable("factions.factionless"))
+                                        .format(ChatFormatting.GRAY)
+                                        .add(
+                                                new Message(
+                                                                ((ServerPlayer) (Object) this)
+                                                                        .getName()
+                                                                        .getString())
+                                                        .format(ChatFormatting.WHITE))
+                                        .raw(),
+                                (ServerPlayer) (Object) this));
             }
         }
     }

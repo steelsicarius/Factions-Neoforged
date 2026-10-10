@@ -1,6 +1,7 @@
 package io.icker.factions.ui;
 
 import net.minecraft.core.component.DataComponents;
+import io.icker.factions.util.Localization;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -41,7 +42,8 @@ public class InputMenu implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
-        return this.title;
+        // Resolved server-side: the client does not have this mod's lang files.
+        return Localization.resolve(this.title, this.player);
     }
 
     public void setTitle(Component title) {
