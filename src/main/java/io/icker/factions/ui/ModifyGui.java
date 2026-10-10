@@ -119,15 +119,23 @@ public class ModifyGui extends FactionsMenu {
         inputGui.confirmBtn.setCallback(
                 (index, clickType) -> {
                     String name = inputGui.getInput();
+                    // RenameDIAG: temporary instrumentation for the GUI rename flow
+                    io.icker.factions.FactionsMod.LOGGER.info(
+                            "[RenameDIAG] change_name confirm clicked, input='{}'", name);
 
                     try {
                         ModifyCommand.execName(player, faction, name);
+                        io.icker.factions.FactionsMod.LOGGER.info(
+                                "[RenameDIAG] execName succeeded, faction name now '{}'",
+                                faction.getName());
                         new Message(
                                         Component.translatable(
                                                 "factions.gui.modify.change_name.result", name))
                                 .prependFaction(faction)
                                 .send(player, false);
                     } catch (Exception e) {
+                        io.icker.factions.FactionsMod.LOGGER.info(
+                                "[RenameDIAG] execName FAILED: {}", e.getMessage());
                         inputGui.showErrorMessage(e.getMessage(), index);
                         return;
                     }

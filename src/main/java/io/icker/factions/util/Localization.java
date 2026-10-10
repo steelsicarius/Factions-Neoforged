@@ -11,6 +11,7 @@ import java.util.Map;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
@@ -68,10 +69,23 @@ public final class Localization {
         }
 
         MutableComponent result = resolveContents(mutable, language);
+        result.setStyle(resolveStyle(mutable.getStyle(), language));
         for (Component sibling : mutable.getSiblings()) {
             result.append(resolve(sibling, language));
         }
         return result;
+    }
+
+    /** Hover contents are components too (e.g. the /f map cell tooltips). */
+    private static Style resolveStyle(Style style, String language) {
+        HoverEvent hover = style.getHoverEvent();
+        if (hover instanceof HoverEvent.ShowText showText) {
+            Component resolved = resolve(showText.value(), language);
+            if (resolved != showText.value()) {
+                return style.withHoverEvent(new HoverEvent.ShowText(resolved));
+            }
+        }
+        return style;
     }
 
     private static MutableComponent resolveContents(MutableComponent component, String language) {
@@ -81,7 +95,11 @@ public final class Localization {
                 return format(template, contents.getArgs(), language, component.getStyle());
             }
         }
-        return component.copy();
+        // Component#copy() copies the siblings as well; resolve() re-appends every sibling
+        // (resolved), so the copy must start empty — otherwise they render twice.
+        MutableComponent copy = component.copy();
+        copy.getSiblings().clear();
+        return copy;
     }
 
     /**
