@@ -76,3 +76,12 @@ Have an issue or a suggestion? Join [our discord][discord]
   aplicados, sin errores, y genera `config/factions.json` + `factions/*.dat`.
 - En esta máquina hay otro proceso escuchando en `0.0.0.0:25565`; usar `server-port=25599`
   (y `server-ip=127.0.0.1`, sin IPv6 usable) en `run/server.properties` para pruebas locales.
+
+- **Integraciones de mapas** (runtime-opcionales, guard en `FactionsMod`):
+  - **BlueMap**: `de.bluecolored:bluemap-api` (el maven de BlueMap renombró el artefacto
+    `BlueMapAPI` a `bluemap-api`; clases idénticas).
+  - **squaremap**: el API ya no se publica en ningún maven público, así que se compila
+    contra el jar exacto del mod `libs/squaremap-neoforge-mc26.1.2-1.3.13.3.jar`
+    (descargado de Modrinth; contiene las mismas clases `xyz.jpenilla.squaremap.api`).
+  - **dynmap**: eliminado del port (sin build NeoForge para 26.1). El botón de admin y el
+    subcomando `/factions admin reload` se fueron con él. Restaurables desde el original.

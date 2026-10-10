@@ -29,7 +29,9 @@ import io.icker.factions.core.InteractionManager;
 import io.icker.factions.core.ServerManager;
 import io.icker.factions.core.SoundManager;
 import io.icker.factions.core.WorldManager;
+import io.icker.factions.util.BlueMapWrapper;
 import io.icker.factions.util.Command;
+import io.icker.factions.util.SquareMapWrapper;
 import io.icker.factions.util.PlaceholdersWrapper;
 import io.icker.factions.util.WorldUtils;
 
@@ -52,13 +54,21 @@ public class FactionsMod {
 
     public static Config CONFIG = Config.load();
 
-    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers.
-    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers.
+    // Port note: the Fabric-only dynmap integration was removed (dynmap has no NeoForge
+    // build for 26.1; FactionsMod.dynmap / DynmapWrapper / us.dynmap:DynmapCoreAPI never
+    // existed in this port). Restore from the original mod if dynmap ever ships
+    // a NeoForge build. BlueMap and squaremap are wired below.
+    public static BlueMapWrapper bluemap;
+    public static SquareMapWrapper squaremap;
 
     public FactionsMod() {
         LOGGER.info("Initialized Factions Mod");
 
         WorldUtils.register();
+
+        // Fabric original: FabricLoader...isModLoaded("bluemap") / ("squaremap")
+        bluemap = ModList.get().isLoaded("bluemap") ? new BlueMapWrapper() : null;
+        squaremap = ModList.get().isLoaded("squaremap") ? new SquareMapWrapper() : null;
 
         // Fabric original: FabricLoader...isModLoaded("placeholder-api"). The NeoForge port of
         // the Text Placeholder API publishes under modid "placeholder-api-neoforge" (Modrinth),

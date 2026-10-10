@@ -54,17 +54,8 @@ public class AdminCommand implements Command {
         return 1;
     }
 
-    // Port note (Fase 5): dynmap has no NeoForge build for 26.1, so FactionsMod.dynmap
-    // (and thus this admin subcommand) is always unavailable in this port. Restore this
-    // method and its command tree node below when the map wrappers land.
-    /*
-    private int reload(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        FactionsMod.dynmap.reloadAll();
-        new Message(Component.translatable("factions.gui.admin.options.reload_dynmap.success"))
-                .send(context.getSource().getPlayerOrException(), false);
-        return 1;
-    }
-    */
+    // Port note: the dynmap integration was removed from this port (dynmap has no
+    // NeoForge build for 26.1), so the "reload" admin subcommand went with it.
 
     private int power(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
@@ -183,7 +174,6 @@ public class AdminCommand implements Command {
                                                 "factions.admin.bypass",
                                                 FactionsMod.CONFIG.REQUIRED_BYPASS_LEVEL))
                                 .executes(this::bypass))
-                // TODO (Fase 5): dynmap "reload" subcommand, see the commented reload() above.
                 .then(
                         Commands.literal("power")
                                 .requires(

@@ -40,6 +40,11 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    // BlueMapAPI (compile-only; the BlueMap mod provides it at runtime)
+    maven { url = 'https://repo.bluecolored.de/releases' }
+
+    // squaremap jar (see the compileOnly dependency below)
+    flatDir { dir 'libs' }
 }
 
 base {
@@ -130,6 +135,18 @@ dependencies {
     // Fabric-only placeholder-api). Runtime-optional, guarded in FactionsMod. Published on
     // Modrinth by OffsetMonkey538 with Patbox (Placeholder API NeoForge, 26.1.x).
     implementation "maven.modrinth:placeholder-api-neoforge:${placeholder_api_version}"
+
+    // BlueMap integration (runtime-optional, guarded in FactionsMod).
+    // Port note: the original Fabric mod used "de.bluecolored.bluemap:BlueMapAPI"; BlueMap's
+    // maven now publishes the api as "de.bluecolored:bluemap-api" (classes are the same
+    // de.bluecolored.bluemap.api.*).
+    compileOnly "de.bluecolored:bluemap-api:${bluemap_api_version}"
+
+    // squaremap integration (runtime-optional). squaremap-api is not published to a
+    // public maven anymore, so the wrapper compiles against the exact squaremap
+    // neoforge mod jar for 26.1.2 (contains the identical api classes).
+    // The group id is ignored when searching via flatDir (MDK pattern).
+    compileOnly "blank:squaremap-neoforge-mc26.1.2-1.3.13.3"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
