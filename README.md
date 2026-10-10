@@ -85,3 +85,12 @@ Have an issue or a suggestion? Join [our discord][discord]
     (descargado de Modrinth; contiene las mismas clases `xyz.jpenilla.squaremap.api`).
   - **dynmap**: eliminado del port (sin build NeoForge para 26.1). El botón de admin y el
     subcomando `/factions admin reload` se fueron con él. Restaurables desde el original.
+
+- **Objetivo de despliegue**: NeoForge **26.1.2.100** (el rango de dependencia resultante
+  `[26.1.2.100,)` cubre también builds superiores como el 26.1.2.114 del MDK).
+- Diagnóstico de crash en servidor de producción (pack de ~100 mods): los 10 mixins de
+  factions aplicaban correctamente; el `ClassCastException: ArrayList -> AnnotationNode`
+  venía de **MixinExtras 0.5.4** (incluido en NeoForge 26.1.2.100) al aplicar un mixin de
+  OTRO mod durante la carga de datapacks. NeoForge 26.1.2.114 incluye MixinExtras 0.5.5
+  (esa ruta corregida) y con solo factions el arranque es limpio en ambos builds.
+  Recomendación: actualizar el servidor a 26.1.2.114+.
