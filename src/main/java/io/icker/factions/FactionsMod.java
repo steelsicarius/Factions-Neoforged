@@ -30,12 +30,14 @@ import io.icker.factions.core.ServerManager;
 import io.icker.factions.core.SoundManager;
 import io.icker.factions.core.WorldManager;
 import io.icker.factions.util.Command;
+import io.icker.factions.util.PlaceholdersWrapper;
 import io.icker.factions.util.WorldUtils;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -50,13 +52,21 @@ public class FactionsMod {
 
     public static Config CONFIG = Config.load();
 
-    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers + PlaceholdersWrapper init.
-    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers + PlaceholdersWrapper init.
+    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers.
+    // TODO (Fase 5): dynmap/bluemap/squaremap wrappers.
 
     public FactionsMod() {
         LOGGER.info("Initialized Factions Mod");
 
         WorldUtils.register();
+
+        // Fabric original: FabricLoader...isModLoaded("placeholder-api"). The NeoForge port of
+        // the Text Placeholder API publishes under modid "placeholder-api-neoforge" (Modrinth),
+        // so both ids are checked.
+        if (ModList.get().isLoaded("placeholder-api")
+                || ModList.get().isLoaded("placeholder-api-neoforge")) {
+            PlaceholdersWrapper.init();
+        }
         ChatManager.register();
         InteractionManager.register();
         FactionsManager.register();

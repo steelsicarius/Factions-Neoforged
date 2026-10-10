@@ -43,3 +43,11 @@ config="${mod_id}.mixins.json"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
+# Optional: Text Placeholder API port for NeoForge (runtime-guarded in FactionsMod)
+[[dependencies.${mod_id}]]
+    modId="placeholder-api-neoforge"
+    type="optional"
+    versionRange="[3.0.0,)"
+    ordering="NONE"
+    side="SERVER"

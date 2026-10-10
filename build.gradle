@@ -29,6 +29,17 @@ sourceSets.main.resources {
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
     mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -114,6 +125,11 @@ configurations {
 dependencies {
     // Pure-Java math library used by ClaimGrouper and the map wrappers (loader-agnostic).
     implementation "com.flowpowered:flow-math:${flow_version}"
+
+    // Text Placeholder API port for NeoForge (same eu.pb4.placeholders API as the original
+    // Fabric-only placeholder-api). Runtime-optional, guarded in FactionsMod. Published on
+    // Modrinth by OffsetMonkey538 with Patbox (Placeholder API NeoForge, 26.1.x).
+    implementation "maven.modrinth:placeholder-api-neoforge:${placeholder_api_version}"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
