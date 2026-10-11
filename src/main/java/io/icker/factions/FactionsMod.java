@@ -33,6 +33,7 @@ import io.icker.factions.util.BlueMapWrapper;
 import io.icker.factions.util.Command;
 import io.icker.factions.util.Permissions;
 import io.icker.factions.util.SquareMapWrapper;
+import io.icker.factions.util.TabWrapper;
 import io.icker.factions.util.PlaceholdersWrapper;
 import io.icker.factions.util.WorldUtils;
 
@@ -85,6 +86,13 @@ public class FactionsMod {
                 || ModList.get().isLoaded("placeholderapi")) {
             PlaceholdersWrapper.init();
             LOGGER.info("Text Placeholder API detected; factions placeholders registered");
+        }
+
+        // TAB's NeoForge platform has no PlaceholderAPI hook (only Fabric/old Forge do),
+        // so its public API is used to register the placeholders directly.
+        if (ModList.get().isLoaded("tab")) {
+            new TabWrapper();
+            LOGGER.info("TAB detected; factions placeholders registered into TAB");
         }
         ChatManager.register();
         InteractionManager.register();

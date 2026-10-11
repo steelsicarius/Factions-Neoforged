@@ -58,12 +58,19 @@ public class InputMenu implements MenuProvider {
         return this.inputText;
     }
 
-    /** Mirrors sgui's getGuiElement: index 1 is the return button, index 2 the confirm button. */
+    /**
+     * Index 1 is the return button; the input paper (0) and the result slot (2) both confirm.
+     *
+     * <p>Port note: the client-side vanilla anvil always rebuilds the result slot with its own
+     * rename preview, visually hiding the confirm button there, so players naturally click the
+     * INPUT PAPER ("the paper with the new name") — both slots must confirm for the flow to
+     * work without a client mod.
+     */
     @Nullable
     public GuiElement getGuiElement(int index) {
         return switch (index) {
+            case AnvilMenu.INPUT_SLOT, AnvilMenu.RESULT_SLOT -> this.confirmBtn;
             case AnvilMenu.ADDITIONAL_SLOT -> this.returnBtn;
-            case AnvilMenu.RESULT_SLOT -> this.confirmBtn;
             default -> null;
         };
     }

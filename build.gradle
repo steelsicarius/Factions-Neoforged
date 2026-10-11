@@ -148,6 +148,11 @@ dependencies {
     // The group id is ignored when searching via flatDir (MDK pattern).
     compileOnly "blank:squaremap-neoforge-mc26.1.2-1.3.13.3"
 
+    // TAB integration (runtime-optional). Compiled against the official TAB 6.0.3 jar for
+    // 26.1.2 (libs/, same flatDir pattern) — its NeoForge platform lacks a eu.pb4
+    // PlaceholderAPI hook, so its own public API is used instead.
+    compileOnly "blank:tab-neoforge-6.0.3"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
