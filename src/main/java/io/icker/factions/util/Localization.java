@@ -125,7 +125,9 @@ public final class Localization {
             if (marker == '%') {
                 result.append("%");
                 index = next + 2;
-            } else if (marker == 's') {
+            } else if (marker == 's' || marker == 'd') {
+                // %s and %d both consume the next positional argument (the mod's lang uses
+                // %d for integers; stringifying covers both).
                 Object arg = positional < args.length ? args[positional] : null;
                 positional++;
                 result.append(argument(arg, language));
@@ -134,7 +136,7 @@ public final class Localization {
                     && marker <= '9'
                     && next + 3 < template.length()
                     && template.charAt(next + 2) == '$'
-                    && template.charAt(next + 3) == 's') {
+                    && (template.charAt(next + 3) == 's' || template.charAt(next + 3) == 'd')) {
                 int argument = marker - '1';
                 result.append(argument(
                         argument < args.length ? args[argument] : null, language));
