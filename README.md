@@ -94,3 +94,19 @@ Have an issue or a suggestion? Join [our discord][discord]
   OTRO mod durante la carga de datapacks. NeoForge 26.1.2.114 incluye MixinExtras 0.5.5
   (esa ruta corregida) y con solo factions el arranque es limpio en ambos builds.
   Recomendación: actualizar el servidor a 26.1.2.114+.
+
+## Versiones de Minecraft soportadas (ramas git)
+
+| Rama | MC | NeoForge | Jar |
+|---|---|---|---|
+| `master` | 26.1.2 | 26.1.2.100+ (rango `[26.1.2.100,)`) | `factions-mc26.1.2-<v>.jar` |
+| `mc26.2` | 26.2 | 26.2.0.90+ (rango `[26.2,26.3)`) | `factions-mc26.2-<v>.jar` |
+| `mc26.3` | 26.3 | 26.3.0.69-beta+ (rango `[26.3,)`) | `factions-mc26.3-<v>.jar` |
+
+Diferencias entre ramas: solo `gradle.properties` (versiones MC/NeoForge/dependencias)
+y los puntos donde 26.2/26.3 cambiaron la API (`TeamColorArgument`/`TeamColor.byName().rgb()`
+/ familias `Items.*.pick(DyeColor)`) — las ramas 26.2/26.3 son idénticas entre sí en codigo.
+Para corregir un bug: arreglar en `master` y cherry-pick a `mc26.2` y `mc26.3`.
+Dependencias por version: placeholder-api-neoforge (3.0.0+26.1 / 3.1.0-beta.1+26.2 /
+3.2.0+26.3), squaremap (libs/, por version), TAB (6.0.3 para 26.1.2, 6.2.0 multiloader
+para 26.2/26.3), flow-math invariante, bluemap-api 2.8.1 invariante.
