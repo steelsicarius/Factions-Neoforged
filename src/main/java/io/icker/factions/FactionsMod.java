@@ -45,7 +45,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,9 +91,10 @@ public class FactionsMod {
 
         // TAB's NeoForge platform has no PlaceholderAPI hook (only Fabric/old Forge do),
         // so its public API is used to register the placeholders directly. TAB's API
-        // instance is null during mod construction ("API was called before TAB was
-        // loaded", crashes the boot), so the registration is deferred to server start.
-        NeoForge.EVENT_BUS.addListener(FactionsMod::serverAboutToStart);
+        // instance is null during mod construction AND during ServerAboutToStart (TAB
+        // initializes it inside its own ServerStartingEvent listener); registering on
+        // ServerStartedEvent is the first deterministic point where it is available.
+        NeoForge.EVENT_BUS.addListener(FactionsMod::serverStarted);
         ChatManager.register();
         InteractionManager.register();
         FactionsManager.register();
@@ -105,7 +106,7 @@ public class FactionsMod {
         NeoForge.EVENT_BUS.addListener(FactionsMod::registerCommands);
     }
 
-    private static void serverAboutToStart(ServerAboutToStartEvent event) {
+    private static void serverStarted(ServerStartedEvent event) {
         if (ModList.get().isLoaded("tab")) {
             new TabWrapper();
             LOGGER.info("TAB detected; factions placeholders registered into TAB");
