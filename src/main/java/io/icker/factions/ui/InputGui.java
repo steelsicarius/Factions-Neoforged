@@ -18,8 +18,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class InputGui extends InputMenu {
-    public GuiElement returnBtn;
-    public GuiElement confirmBtn;
+    // Port note: do NOT redeclare returnBtn/confirmBtn here — fields are not polymorphic
+    // in Java, and InputMenu.getGuiElement() reads the BASE fields; shadowing them made the
+    // confirm click resolve to a null element (the click reached the server, the callback
+    // never ran (verified with RenameDIAG logging).
     private final Timer timer = new Timer();
 
     public InputGui(ServerPlayer player) {

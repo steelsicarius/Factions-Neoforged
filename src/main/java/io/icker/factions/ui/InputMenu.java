@@ -152,9 +152,6 @@ public class InputMenu implements MenuProvider {
 
         @Override
         public boolean setItemName(String name) {
-            // RenameDIAG: temporary instrumentation for the GUI rename flow
-            io.icker.factions.FactionsMod.LOGGER.info(
-                    "[RenameDIAG] setItemName recorded: '{}'", name);
             InputMenu.this.inputText = name;
             return super.setItemName(name);
         }
@@ -169,9 +166,6 @@ public class InputMenu implements MenuProvider {
 
         @Override
         public void clicked(int slotIndex, int buttonNum, ContainerInput input, Player player) {
-            // RenameDIAG: temporary instrumentation for the GUI rename flow
-            io.icker.factions.FactionsMod.LOGGER.info(
-                    "[RenameDIAG] clicked slot={} input={} button={}", slotIndex, input, buttonNum);
             GuiElement element = InputMenu.this.getGuiElement(slotIndex);
             if (element != null) {
                 element.runCallback(slotIndex, ClickType.fromVanilla(input, buttonNum));
