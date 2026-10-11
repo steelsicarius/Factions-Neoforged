@@ -107,6 +107,20 @@ public final class Localization {
      * {@code %s}/{@code %n$s} placeholder inserts its argument; component arguments are
      * resolved recursively, other arguments are stringified.
      */
+    /**
+     * Mirrors vanilla's translatable rendering: literal chunks become text and each
+     * placeholder inserts its argument; component arguments are resolved recursively,
+     * other arguments are stringified. Supports the specifier grammar used by the mod's
+     * lang files: {@code %[N$][.P][s|d|f]} plus {@code %%}:
+     *
+     * <ul>
+     *   <li>{@code %s} / {@code %d} consume the next positional argument (stringified);</li>
+     *   <li>{@code %1$s}, {@code %2$s}, ... select the argument by (1-based) index;</li>
+     *   <li>{@code %f} formats a numeric argument with Java's default precision and
+     *       {@code %.Pf} with precision P (e.g. {@code %.2f} for coordinates);</li>
+     *   <li>{@code %%} renders a literal percent sign.</li>
+     * </ul>
+     */
     private static MutableComponent format(
             String template, Object[] args, String language, Style style) {
         MutableComponent result = Component.empty().withStyle(style);
@@ -114,34 +128,86 @@ public final class Localization {
         int index = 0;
         while (index < template.length()) {
             int next = template.indexOf('%', index);
-            if (next == -1 || next + 1 >= template.length()) {
+            if (next == -1) {
                 result.append(template.substring(index));
                 break;
             }
             if (next > index) {
                 result.append(template.substring(index, next));
             }
-            char marker = template.charAt(next + 1);
-            if (marker == '%') {
+            if (next + 1 >= template.length()) {
                 result.append("%");
-                index = next + 2;
-            } else if (marker == 's' || marker == 'd') {
-                // %s and %d both consume the next positional argument (the mod's lang uses
-                // %d for integers; stringifying covers both).
-                Object arg = positional < args.length ? args[positional] : null;
-                positional++;
-                result.append(argument(arg, language));
-                index = next + 2;
-            } else if (marker >= '1'
-                    && marker <= '9'
-                    && next + 3 < template.length()
-                    && template.charAt(next + 2) == '$'
-                    && (template.charAt(next + 3) == 's' || template.charAt(next + 3) == 'd')) {
-                int argument = marker - '1';
-                result.append(argument(
-                        argument < args.length ? args[argument] : null, language));
-                index = next + 4;
+                break;
+            }
+
+            int cursor = next + 1;
+            char first = template.charAt(cursor);
+
+            if (first == '%') {
+                result.append("%");
+                index = cursor + 1;
+                continue;
+            }
+
+            // Optional positional index: N$
+            int argumentIndex = -1;
+            if (first >= '1' && first <= '9') {
+                int numberEnd = cursor;
+                while (numberEnd < template.length()
+                        && template.charAt(numberEnd) >= '0'
+                        && template.charAt(numberEnd) <= '9') {
+                    numberEnd++;
+                }
+                if (numberEnd < template.length() && template.charAt(numberEnd) == '$') {
+                    argumentIndex = Integer.parseInt(template.substring(cursor, numberEnd)) - 1;
+                    cursor = numberEnd + 1;
+                }
+            }
+
+            // Optional precision: .P
+            int precision = -1;
+            if (cursor < template.length() && template.charAt(cursor) == '.') {
+                int precisionEnd = cursor + 1;
+                while (precisionEnd < template.length()
+                        && template.charAt(precisionEnd) >= '0'
+                        && template.charAt(precisionEnd) <= '9') {
+                    precisionEnd++;
+                }
+                precision = Integer.parseInt(template.substring(cursor + 1, precisionEnd));
+                cursor = precisionEnd;
+            }
+
+            if (cursor >= template.length()) {
+                result.append("%");
+                index = next + 1;
+                continue;
+            }
+            char conversion = template.charAt(cursor);
+
+            if (conversion == 's' || conversion == 'd' || conversion == 'f') {
+                Object arg;
+                if (argumentIndex >= 0) {
+                    arg = argumentIndex < args.length ? args[argumentIndex] : null;
+                } else {
+                    arg = positional < args.length ? args[positional] : null;
+                    positional++;
+                }
+
+                if (conversion == 'f') {
+                    // Numeric formatting with precision (e.g. %.2f for coordinates);
+                    // non-numeric arguments fall back to their string form.
+                    if (arg instanceof Number number) {
+                        String pattern = precision < 0 ? "%f" : "%." + precision + "f";
+                        result.append(String.format(pattern, number.doubleValue()));
+                    } else {
+                        result.append(arg == null ? "null" : String.valueOf(arg));
+                    }
+                } else {
+                    result.append(argument(arg, language));
+                }
+                index = cursor + 1;
             } else {
+                // Unknown specifier: keep the percent sign, re-scan after it.
                 result.append("%");
                 index = next + 1;
             }
