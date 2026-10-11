@@ -1,0 +1,43 @@
+{
+    "schemaVersion": 1,
+    "id": "factions",
+    "version": "${version}",
+
+    "name": "Factions Mod",
+    "description": "Highly customizable, lightweight and elegant Factions mod for the Fabric loader",
+    "authors": [
+        "ickerio",
+        "BlueZeeKing",
+        "PyPylia"
+    ],
+    "contact": {
+        "homepage": "https://icker.io/factions/",
+        "sources": "https://github.com/ickerio/factions"
+    },
+
+    "license": "MIT",
+    "icon": "assets/factions/icon.png",
+
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+        "io.icker.factions.FactionsMod"
+        ]
+    },
+    "mixins": [
+        "factions.mixins.json"
+    ],
+
+  "depends": {
+    "fabricloader": ">=0.13.3",
+    "minecraft": "~26.3",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "fabric-permissions-api-v0": "*",
+    "dynmap": ">=3.0",
+    "squaremap": ">=1.0",
+    "bluemap": ">=2.0"
+  }
+}

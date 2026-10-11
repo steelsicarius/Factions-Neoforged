@@ -1,0 +1,21 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "io.icker.factions.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "mixins": [
+        "CombatTrackerAccessor",
+        "EnderChestBlockMixin",
+        "ItemInvoker",
+        "BaseContainerBlockEntityMixin",
+        "MinecraftServerMixin",
+        "PlayerListMixin",
+        "ServerPlayerMixin",
+        "ServerPlayerGameModeMixin",
+        "ServerGamePacketListenerImplMixin",
+        "ServerExplosionMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

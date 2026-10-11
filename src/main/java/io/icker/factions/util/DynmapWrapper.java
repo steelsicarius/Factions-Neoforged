@@ -1,0 +1,254 @@
+package io.icker.factions.util;
+
+import com.flowpowered.math.vector.Vector2i;
+
+import io.icker.factions.FactionsMod;
+import io.icker.factions.api.events.ClaimEvents;
+import io.icker.factions.api.events.FactionEvents;
+import io.icker.factions.api.persistents.Claim;
+import io.icker.factions.api.persistents.Faction;
+import io.icker.factions.api.persistents.Home;
+
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+
+import net.minecraft.world.scores.TeamColor;
+import org.dynmap.DynmapCommonAPI;
+import org.dynmap.DynmapCommonAPIListener;
+import org.dynmap.markers.AreaMarker;
+import org.dynmap.markers.GenericMarker;
+import org.dynmap.markers.Marker;
+import org.dynmap.markers.MarkerAPI;
+import org.dynmap.markers.MarkerSet;
+import org.dynmap.markers.PolyLineMarker;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+public class DynmapWrapper {
+    private DynmapCommonAPI api;
+    private MarkerAPI markerApi;
+    private MarkerSet markerSet;
+    private boolean loadWhenReady = false;
+
+    public DynmapWrapper() {
+        DynmapCommonAPIListener.register(
+                new DynmapCommonAPIListener() {
+                    @Override
+                    public void apiEnabled(DynmapCommonAPI dCAPI) {
+                        api = dCAPI;
+                        markerApi = api.getMarkerAPI();
+                        markerSet = markerApi.getMarkerSet("dynmap-factions");
+                        if (markerSet == null) {
+                            markerSet =
+                                    markerApi.createMarkerSet(
+                                            "dynmap-factions",
+                                            "The Dynmap Factions integration",
+                                            null,
+                                            true);
+                        }
+                        markerSet.getMarkers().forEach(GenericMarker::deleteMarker);
+                        generateMarkers();
+                    }
+                });
+
+        ClaimEvents.ADD.register(
+                (claim) -> {
+                    generateMarkers();
+                });
+        ClaimEvents.REMOVE.register(
+                (x, z, level, faction) -> {
+                    generateMarkers();
+                });
+
+        WorldUtils.ON_READY.register(
+                () -> {
+                    if (loadWhenReady) {
+                        loadWhenReady = false;
+
+                        generateMarkers();
+                    }
+                });
+
+        FactionEvents.SET_HOME.register(this::setHome);
+        FactionEvents.MODIFY.register(faction -> updateFaction(faction));
+        FactionEvents.MEMBER_JOIN.register((faction, user) -> updateFaction(faction));
+        FactionEvents.MEMBER_LEAVE.register((faction, user) -> updateFaction(faction));
+        FactionEvents.POWER_CHANGE.register((faction, oldPower) -> updateFaction(faction));
+        FactionEvents.DISBAND.register((faction) -> generateMarkers());
+    }
+
+    private void generateMarkers() {
+        if (!WorldUtils.isReady() || !WorldUtils.hasWorlds()) {
+            loadWhenReady = true;
+            FactionsMod.LOGGER.info("Server hasn't loaded, postponing dynmap marker loading");
+            return;
+        }
+
+        for (PolyLineMarker marker : markerSet.getPolyLineMarkers()) {
+            marker.deleteMarker();
+        }
+
+        for (AreaMarker marker : markerSet.getAreaMarkers()) {
+            marker.deleteMarker();
+        }
+
+        for (Faction faction : Faction.all()) {
+            Home home = faction.getHome();
+            if (home != null) {
+                setHome(faction, home);
+            }
+
+            String info = getInfo(faction);
+            for (Claim claim : faction.getClaims()) {
+                ChunkPos pos = new ChunkPos(claim.x, claim.z);
+
+                AreaMarker marker =
+                        markerSet.createAreaMarker(
+                                claim.getKey(),
+                                info,
+                                true,
+                                dimensionTagToID(claim.level),
+                                new double[] {pos.getMinBlockX(), pos.getMaxBlockX() + 1},
+                                new double[] {pos.getMinBlockZ(), pos.getMaxBlockZ() + 1},
+                                true);
+                if (marker != null) {
+                    marker.setFillStyle(marker.getFillOpacity(), TeamColor.byName(faction.getColor().name().toLowerCase()).rgb());
+                    marker.setLineStyle(0, 0, 0);
+                }
+            }
+            for (Map.Entry<String, Set<Vector2i>> entry :
+                    ClaimGrouper.separateClaimsByLevel(faction).entrySet()) {
+                String level = entry.getKey();
+                for (Map<Vector2i, Vector2i[]> group :
+                        ClaimGrouper.convertClaimsToLineSegmentGroups(entry.getValue())) {
+                    for (List<Vector2i> outline :
+                            ClaimGrouper.convertLineSegmentsToOutlines(group)) {
+                        outline.add(outline.get(0));
+                        double[] x_coords =
+                                outline.stream()
+                                        .mapToDouble((point) -> (double) point.getX())
+                                        .toArray();
+                        double[] z_coords =
+                                outline.stream()
+                                        .mapToDouble((point) -> (double) point.getY())
+                                        .toArray();
+                        double[] y_coords =
+                                outline.stream().mapToDouble((point) -> 320.0).toArray();
+
+                        PolyLineMarker marker =
+                                markerSet.createPolyLineMarker(
+                                        UUID.randomUUID().toString(),
+                                        "",
+                                        false,
+                                        dimensionTagToID(level),
+                                        x_coords,
+                                        y_coords,
+                                        z_coords,
+                                        true);
+                        if (marker != null) {
+                            marker.setLineStyle(
+                                    marker.getLineWeight(),
+                                    marker.getLineOpacity(),
+                                    TeamColor.byName(faction.getColor().name().toLowerCase()).rgb());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateFaction(Faction faction) {
+        String info = getInfo(faction);
+
+        for (Claim claim : faction.getClaims()) {
+            AreaMarker marker = markerSet.findAreaMarker(claim.getKey());
+
+            marker.setFillStyle(marker.getFillOpacity(), TeamColor.byName(faction.getColor().name().toLowerCase()).rgb());
+            marker.setLineStyle(
+                    marker.getLineWeight(), marker.getLineOpacity(), TeamColor.byName(faction.getColor().name().toLowerCase()).rgb());
+            marker.setDescription(info);
+        }
+    }
+
+    private void setHome(Faction faction, Home home) {
+        Marker marker = markerSet.findMarker(faction.getID().toString() + "-home");
+        if (home == null && marker != null) {
+            marker.deleteMarker();
+            return;
+        }
+
+        if (marker == null) {
+            markerSet.createMarker(
+                    faction.getID().toString() + "-home",
+                    faction.getName() + "'s Home",
+                    dimensionTagToID(home.level),
+                    home.x,
+                    home.y,
+                    home.z,
+                    null,
+                    true);
+        } else {
+            marker.setLocation(dimensionTagToID(home.level), home.x, home.y, home.z);
+        }
+    }
+
+    public String getWorldName(Level w) { // Taken from the Dynmap mod (Credit to them)
+        ResourceKey<Level> rk = w.dimension();
+        if (rk == Level.OVERWORLD) {
+            return w.getServer().getWorldData().getLevelName();
+        } else if (rk == Level.END) {
+            return "DIM1";
+        } else if (rk == Level.NETHER) {
+            return "DIM-1";
+        } else {
+            return rk.identifier().getNamespace() + "_" + rk.identifier().getPath();
+        }
+    }
+
+    public String dimensionTagToID(String dimension_id) {
+        if (!WorldUtils.isReady()) {
+            FactionsMod.LOGGER.warn(
+                    "Server object has not been initialized please run the dynmap reload command");
+            return dimension_id;
+        }
+
+        ServerLevel world = WorldUtils.getWorld(dimension_id);
+
+        if (world == null) {
+            FactionsMod.LOGGER.error(
+                    String.format("Unable to find dimension id: %s", dimension_id));
+            return dimension_id;
+        }
+
+        return getWorldName(world);
+    }
+
+    private String getInfo(Faction faction) {
+        return "Name: "
+                + faction.getName()
+                + "<br>"
+                + "Description: "
+                + faction.getDescription()
+                + "<br>"
+                + "Power: "
+                + faction.getPower()
+                + "<br>"
+                + "Number of members: "
+                + faction.getUsers().size(); // + "<br>"
+        // + "Allies: " + Ally.getAllies(faction.getName).stream().map(ally ->
+        // ally.target).collect(Collectors.joining(", "));
+    }
+
+    public void reloadAll() {
+        markerSet.deleteMarkerSet();
+        markerSet =
+                markerApi.createMarkerSet(
+                        "dynmap-factions", "The Dynmap Factions integration", null, true);
+        generateMarkers();
+    }
+}

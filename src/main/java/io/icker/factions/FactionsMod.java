@@ -1,0 +1,120 @@
+package io.icker.factions;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+
+import io.icker.factions.command.AdminCommand;
+import io.icker.factions.command.ClaimCommand;
+import io.icker.factions.command.CreateCommand;
+import io.icker.factions.command.DeclareCommand;
+import io.icker.factions.command.DisbandCommand;
+import io.icker.factions.command.HomeCommand;
+import io.icker.factions.command.InfoCommand;
+import io.icker.factions.command.InviteCommand;
+import io.icker.factions.command.JoinCommand;
+import io.icker.factions.command.KickCommand;
+import io.icker.factions.command.LeaveCommand;
+import io.icker.factions.command.ListCommand;
+import io.icker.factions.command.MapCommand;
+import io.icker.factions.command.MemberCommand;
+import io.icker.factions.command.ModifyCommand;
+import io.icker.factions.command.PermissionCommand;
+import io.icker.factions.command.RankCommand;
+import io.icker.factions.command.SafeCommand;
+import io.icker.factions.command.SettingsCommand;
+import io.icker.factions.config.Config;
+import io.icker.factions.core.ChatManager;
+import io.icker.factions.core.FactionsManager;
+import io.icker.factions.core.InteractionManager;
+import io.icker.factions.core.ServerManager;
+import io.icker.factions.core.SoundManager;
+import io.icker.factions.core.WorldManager;
+import io.icker.factions.util.BlueMapWrapper;
+import io.icker.factions.util.Command;
+import io.icker.factions.util.DynmapWrapper;
+import io.icker.factions.util.PlaceholdersWrapper;
+import io.icker.factions.util.SquareMapWrapper;
+import io.icker.factions.util.WorldUtils;
+
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class FactionsMod implements ModInitializer {
+    public static Logger LOGGER = LoggerFactory.getLogger("Factions");
+    public static final String MODID = "factions";
+
+    public static Config CONFIG = Config.load();
+    public static DynmapWrapper dynmap;
+    public static BlueMapWrapper bluemap;
+    public static SquareMapWrapper squaremap;
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info("Initialized Factions Mod");
+
+        WorldUtils.register();
+
+        dynmap = FabricLoader.getInstance().isModLoaded("dynmap") ? new DynmapWrapper() : null;
+        bluemap = FabricLoader.getInstance().isModLoaded("bluemap") ? new BlueMapWrapper() : null;
+        squaremap =
+                FabricLoader.getInstance().isModLoaded("squaremap") ? new SquareMapWrapper() : null;
+
+        if (FabricLoader.getInstance().isModLoaded("placeholder-api")) PlaceholdersWrapper.init();
+
+        ChatManager.register();
+        FactionsManager.register();
+        InteractionManager.register();
+        ServerManager.register();
+        SoundManager.register();
+        WorldManager.register();
+
+        CommandRegistrationCallback.EVENT.register(FactionsMod::registerCommands);
+    }
+
+    private static void registerCommands(
+            CommandDispatcher<CommandSourceStack> dispatcher,
+            CommandBuildContext registryAccess,
+            Commands.CommandSelection environment) {
+        LiteralCommandNode<CommandSourceStack> factions = Commands.literal("factions").build();
+
+        LiteralCommandNode<CommandSourceStack> alias = Commands.literal("f").build();
+
+        dispatcher.getRoot().addChild(factions);
+        dispatcher.getRoot().addChild(alias);
+
+        Command[] commands =
+                new Command[] {
+                    new AdminCommand(),
+                    new SettingsCommand(),
+                    new ClaimCommand(),
+                    new CreateCommand(),
+                    new DeclareCommand(),
+                    new DisbandCommand(),
+                    new HomeCommand(),
+                    new InfoCommand(),
+                    new InviteCommand(),
+                    new JoinCommand(),
+                    new KickCommand(),
+                    new LeaveCommand(),
+                    new ListCommand(),
+                    new MapCommand(),
+                    new MemberCommand(),
+                    new ModifyCommand(),
+                    new RankCommand(),
+                    new SafeCommand(),
+                    new PermissionCommand()
+                };
+
+        for (Command command : commands) {
+            factions.addChild(command.getNode());
+            alias.addChild(command.getNode());
+        }
+    }
+}

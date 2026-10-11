@@ -1,0 +1,40 @@
+package io.icker.factions.api.persistents;
+
+import io.icker.factions.database.Field;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+public class Relationship {
+    public enum Status {
+        ALLY,
+        NEUTRAL,
+        ENEMY,
+    }
+
+    public enum Permissions {
+        USE_BLOCKS,
+        PLACE_BLOCKS,
+        BREAK_BLOCKS,
+        USE_ENTITIES,
+        ATTACK_ENTITIES,
+        USE_INVENTORIES
+    }
+
+    @Field("Target")
+    public UUID target;
+
+    @Field("Status")
+    public Status status;
+
+    @Field("Permissions")
+    public ArrayList<Permissions> permissions;
+
+    public Relationship(Faction source, UUID target, Status status) {
+        this.target = target;
+        this.status = status;
+        this.permissions = new ArrayList<>(source.guest_permissions);
+    }
+
+    public Relationship() {}
+}
