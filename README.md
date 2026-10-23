@@ -13,6 +13,7 @@ Highly customizable, lightweight and elegant factions mod for the [Fabric loader
 </div>
 
 ### **ABOUT**
+Unoficial Neoforge Fork from ickerio/factions
 
 Factions Mod is an ultra lightweight, fast, and elegant solution to factions in modern minecraft. The **server-side** mod expands upon all the classic factions features whilst also focusing on customization and performance. Grow your faction, expand your claims, and storm your enemies for their chunks and loot.
 
