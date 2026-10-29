@@ -31,6 +31,7 @@ import io.icker.factions.core.SoundManager;
 import io.icker.factions.core.WorldManager;
 import io.icker.factions.util.BlueMapWrapper;
 import io.icker.factions.util.Command;
+import io.icker.factions.util.DynmapWrapper;
 import io.icker.factions.util.Permissions;
 import io.icker.factions.util.SquareMapWrapper;
 import io.icker.factions.util.TabWrapper;
@@ -57,12 +58,9 @@ public class FactionsMod {
 
     public static Config CONFIG = Config.load();
 
-    // Port note: the Fabric-only dynmap integration was removed (dynmap has no NeoForge
-    // build for 26.1; FactionsMod.dynmap / DynmapWrapper / us.dynmap:DynmapCoreAPI never
-    // existed in this port). Restore from the original mod if dynmap ever ships
-    // a NeoForge build. BlueMap and squaremap are wired below.
     public static BlueMapWrapper bluemap;
     public static SquareMapWrapper squaremap;
+    public static DynmapWrapper dynmap;
 
     public FactionsMod() {
         LOGGER.info("Initialized Factions Mod");
@@ -76,6 +74,7 @@ public class FactionsMod {
         // Fabric original: FabricLoader...isModLoaded("bluemap") / ("squaremap")
         bluemap = ModList.get().isLoaded("bluemap") ? new BlueMapWrapper() : null;
         squaremap = ModList.get().isLoaded("squaremap") ? new SquareMapWrapper() : null;
+        dynmap = ModList.get().isLoaded("dynmap") ? new DynmapWrapper() : null;
 
         // Fabric original: FabricLoader...isModLoaded("placeholder-api"). Multiple ports of
         // Patbox's Text Placeholder API exist for NeoForge with different mod ids:

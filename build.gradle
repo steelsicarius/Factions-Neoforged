@@ -148,6 +148,10 @@ dependencies {
     // The group id is ignored when searching via flatDir (MDK pattern).
     compileOnly "blank:${squaremap_artifact}"
 
+    // dynmap integration (runtime-optional). Compiled against the built dynmap jar
+    // from the sibling Dynmap-Neoforged project (contains DynmapCoreAPI classes).
+    compileOnly "blank:Dynmap-3.9-SNAPSHOT-neoforge-26.1.2"
+
     // TAB integration (runtime-optional). Compiled against the official TAB jar
     // (libs/, same flatDir pattern) — its NeoForge platform lacks a eu.pb4
     // PlaceholderAPI hook, so its own public API is used instead.
