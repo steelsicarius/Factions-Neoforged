@@ -180,6 +180,18 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
+// Bundle flow-math (pure-Java library) into the mod jar so its classes
+// (e.g. com.flowpowered.math.vector.Vector2i used by ClaimGrouper) are
+// available at runtime. Other implementation deps (e.g. placeholder-api)
+// are NeoForge mods that remain separate; compileOnly deps (dynmap,
+// squaremap, bluemap, tab) are provided at runtime by their respective mods.
+tasks.named('jar') {
+    from(zipTree(file('libs/flow-math-1.0.3.jar'))) {
+        include 'com/flowpowered/**'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

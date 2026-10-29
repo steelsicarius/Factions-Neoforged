@@ -8,6 +8,7 @@ import io.icker.factions.api.events.FactionEvents;
 import io.icker.factions.api.persistents.Claim;
 import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.Home;
+import io.icker.factions.util.WorldUtils;
 
 import org.dynmap.DynmapCommonAPI;
 import org.dynmap.DynmapCommonAPIListener;
@@ -17,6 +18,8 @@ import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 
 import net.minecraft.ChatFormatting;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 import java.awt.Color;
 import java.util.HashSet;
@@ -49,6 +52,17 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
         FactionEvents.MEMBER_LEAVE.register((faction, user) -> generateMarkers());
         FactionEvents.POWER_CHANGE.register((faction, oldPower) -> generateMarkers());
         FactionEvents.DISBAND.register((faction) -> generateMarkers());
+
+        // Defer initial marker generation until the server is fully started and
+        // worlds are loaded. Calling generateMarkers() from apiEnabled() fires too
+        // early (during onServerAboutToStart) when WorldUtils.getWorld() returns null,
+        // causing a crash in Faction's static initializer.
+        NeoForge.EVENT_BUS.addListener(
+                (ServerStartedEvent event) -> {
+                    if (markerApi != null) {
+                        generateMarkers();
+                    }
+                });
     }
 
     @Override
@@ -63,8 +77,14 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
         if (claimIcon == null) {
             claimIcon = markerApi.createMarkerIcon("factions-default", "Default", null);
         }
-
-        generateMarkers();
+        // Do NOT call generateMarkers() unconditionally here — it fires too early during
+        // server startup (onServerAboutToStart) when WorldUtils.getWorld() returns null,
+        // causing a crash in Faction's static initializer. It is deferred to the
+        // ServerStartedEvent listener above. If the server is already started (rare edge
+        // case where apiEnabled fires after ServerStartedEvent), generate immediately.
+        if (WorldUtils.hasWorlds()) {
+            generateMarkers();
+        }
     }
 
     @Override
