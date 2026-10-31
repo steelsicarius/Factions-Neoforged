@@ -77,6 +77,16 @@ Have an issue or a suggestion? Join [our discord][discord]
 - En esta máquina hay otro proceso escuchando en `0.0.0.0:25565`; usar `server-port=25599`
   (y `server-ip=127.0.0.1`, sin IPv6 usable) en `run/server.properties` para pruebas locales.
 
+- **Integración Dynmap (claims en mapa HD)**: `src/main/java/io/icker/factions/util/DynmapWrapper.java`
+  - Escucha `ClaimEvents` / `FactionEvents` y genera `AreaMarker` (polígonos de claim) y marcadores de home en el set "factions".
+  - **Importante para que los claims aparezcan en el mapa HD de Dynmap:**
+    - El set "factions" se crea persistente (`createMarkerSet(..., true)`) para que Dynmap escriba el archivo `_markers_/marker_<mundo>.json` que el cliente web consulta al cargar.
+    - **Fix color (2026-10-31):** el contrato de la API de Dynmap es RGB de 24 bits (`0xRRGGBB`, ver javadoc de `AreaMarker.setLineStyle/setFillStyle`). Se pasaban valores ARGB de 32 bits (p. ej. `0xFFFFAA00` vía `java.awt.Color#getRGB`), y el `#%06X` de Dynmap no trunca, así que el JSON de markers llevaba `"#FFFFAA00"`. Los navegadores interpretan 8 dígitos hex como `#RRGGBBAA` ⇒ alpha `0x00` ⇒ polígonos 100% transparentes (el menú "Factions Claims" cargaba pero los territorios no se veían). Ahora se pasa `rgb & 0xFFFFFF` y la opacidad se indica en los parámetros de `setLineStyle`/`setFillStyle`.
+    - No se borra el set entero entre regeneraciones; solo se eliminan y recrean los marcadores de área individuales. Borrar el set impedía a Dynmap persistir el JSON de marcadores.
+    - `markup=false` en `createAreaMarker`/`createMarker` (los marcadores con `markup=true` son dibujos temporales del cliente, no se renderizan en capas HD).
+    - `defaultworld` en `dynmap/configuration.txt` debe coincidir con el nombre del nivel del servidor (ej. `"Mundo nuevo"`).
+    - El archivo `dynmap/markers.yml` debe incluir el set `factions` con `hide: false` y `layerprio` para que aparezca en el selector de capas web.
+    - Después de instalar/modificar el JAR, reiniciar el servidor y recargar la página del mapa (limpiar caché del navegador si es necesario).
 - **Integraciones de mapas** (runtime-opcionales, guard en `FactionsMod`):
   - **BlueMap**: `de.bluecolored:bluemap-api` (el maven de BlueMap renombró el artefacto
     `BlueMapAPI` a `bluemap-api`; clases idénticas).

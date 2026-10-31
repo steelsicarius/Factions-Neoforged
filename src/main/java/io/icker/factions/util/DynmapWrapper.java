@@ -18,14 +18,17 @@ import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
-import java.awt.Color;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -59,8 +62,11 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
         // causing a crash in Faction's static initializer.
         NeoForge.EVENT_BUS.addListener(
                 (ServerStartedEvent event) -> {
+                    FactionsMod.LOGGER.info("[Dynmap] ServerStartedEvent fired, markerApi=" + markerApi);
                     if (markerApi != null) {
                         generateMarkers();
+                    } else {
+                        FactionsMod.LOGGER.warn("[Dynmap] ServerStartedEvent fired but markerApi is null - factions markers will not be generated");
                     }
                 });
     }
@@ -83,7 +89,10 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
         // ServerStartedEvent listener above. If the server is already started (rare edge
         // case where apiEnabled fires after ServerStartedEvent), generate immediately.
         if (WorldUtils.hasWorlds()) {
+            FactionsMod.LOGGER.info("[Dynmap] Worlds ready in apiEnabled, generating markers");
             generateMarkers();
+        } else {
+            FactionsMod.LOGGER.info("[Dynmap] apiEnabled called but worlds not ready yet, deferring to ServerStartedEvent");
         }
     }
 
@@ -96,23 +105,46 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
 
     private void generateMarkers() {
         if (markerApi == null) {
+            FactionsMod.LOGGER.warn("[Dynmap] generateMarkers called but markerApi is null");
             return;
         }
 
-        clearMarkers();
+        FactionsMod.LOGGER.info("[Dynmap] generateMarkers() called");
 
-        MarkerSet set = markerApi.getMarkerSet("factions");
-        if (set == null) {
-            set = markerApi.createMarkerSet("factions", "Factions Claims", null, true);
+        // Obtener o crear el set de marcadores "factions" (mantenerlo persistente para que dynmap
+        // escriba el archivo JSON de marcadores y los clientes puedan consultarlo en cualquier momento)
+        final MarkerSet factionSet;
+        MarkerSet existingSet = markerApi.getMarkerSet("factions");
+        if (existingSet == null) {
+            factionSet = markerApi.createMarkerSet("factions", "Factions Claims", null, true);
+        } else {
+            factionSet = existingSet;
         }
-        final MarkerSet factionSet = set;
         factionSet.setHideByDefault(false);
         factionSet.setLabelShow(true);
 
+        // Eliminar todos los marcadores de área existentes del set (manteniendo el set
+        // para evitar churn que impide a dynmap escribir el JSON de marcadores).
+        // Se recrearán abajo con los datos actuales de las facciones.
+        for (AreaMarker existing : new HashSet<>(factionSet.getAreaMarkers())) {
+            existing.deleteMarker();
+        }
+
+        AtomicInteger factionCount = new AtomicInteger(0);
+        AtomicInteger markerCount = new AtomicInteger(0);
+
         for (Faction faction : Faction.all()) {
+            factionCount.incrementAndGet();
             String info = getInfo(faction);
 
             ClaimGrouper.separateClaimsByLevel(faction).forEach((level, claims) -> {
+                String dynmapWorld = getDynmapWorldName(level);
+                if (dynmapWorld == null) {
+                    FactionsMod.LOGGER.warn("[Dynmap] Skipping claims in unknown world: " + level);
+                    return;
+                }
+                FactionsMod.LOGGER.info("[Dynmap] Faction {} claims in world '{}': {} claims", faction.getName(), dynmapWorld, claims.size());
+
                 ClaimGrouper.convertClaimsToLineSegmentGroups(claims).forEach(group -> {
                     List<List<Vector2i>> outlines =
                             ClaimGrouper.convertLineSegmentsToOutlines(group);
@@ -129,22 +161,33 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
                             zs[i] = outline.get(i).getY();
                         }
 
-                        Color factionColor = new Color(getColorRgb(faction));
-                        int fillRGBA = factionColor.getRGB() | 0x40000000; // ~25% opacity fill
-                        int lineRGBA = factionColor.getRGB() | 0xFF000000; // solid outline
+                        // Dynmap's MarkerAPI expects 24-bit RGB colors (0xRRGGBB) with the
+                        // opacity conveyed via the setLineStyle/setFillStyle parameters.
+                        // Passing 32-bit ARGB values (e.g. 0xFFFFAA00 from ChatFormatting
+                        // through java.awt.Color#getRGB) leaks the alpha byte into the
+                        // "#%06X" hex produced for the marker JSON ("#FFFFAA00"), which
+                        // browsers parse as #RRGGBBAA => alpha 0x00 => fully transparent
+                        // (invisible) claim areas on the web map.
+                        int rgb = getColorRgb(faction) & 0xFFFFFF;
+
+                        FactionsMod.LOGGER.info("[Dynmap] Creating area marker for faction {} in world '{}' with {} points (color #{}): xs={} zs={}",
+                                faction.getName(), dynmapWorld, outline.size(),
+                                String.format("%06X", rgb),
+                                java.util.Arrays.toString(xs), java.util.Arrays.toString(zs));
 
                         AreaMarker area = factionSet.createAreaMarker(
                                 UUID.randomUUID().toString(),
                                 faction.getName(),
-                                true, // markup
-                                level,
+                                false, // markup (false = regular marker visible on HD maps)
+                                dynmapWorld,
                                 xs, zs,
                                 true); // persistent
 
-                        area.setLineStyle(2, 1.0, lineRGBA);
-                        area.setFillStyle(0.25, fillRGBA);
+                        area.setLineStyle(2, 1.0, rgb); // solid outline (opacity 1.0)
+                        area.setFillStyle(0.25, rgb);   // ~25% opacity fill
                         area.setDescription(info);
                         area.setLabel(faction.getName(), true);
+                        markerCount.incrementAndGet();
                     }
                 });
             });
@@ -152,9 +195,43 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
             // Home marker
             Home home = faction.getHome();
             if (home != null) {
+                FactionsMod.LOGGER.info("[Dynmap] Home marker for faction {} at world={} x={} z={}",
+                        faction.getName(), home.level, home.x, home.z);
                 setHome(faction, home);
             }
         }
+
+        FactionsMod.LOGGER.info("[Dynmap] generateMarkers() complete: " + factionCount.get() + " factions, " + markerCount.get() + " area markers");
+    }
+
+    /**
+     * Converts a factions claim level (dimension ID, e.g. "minecraft:overworld") to the
+     * corresponding dynmap world name (e.g. "Mundo nuevo", "DIM-1", "DIM1").
+     * Uses the same naming logic as {@code NeoForgeWorld.getWorldName()}.
+     *
+     * @param level the factions claim level/dimension ID
+     * @return the dynmap world name, or null if the level cannot be mapped to a loaded world
+     */
+    private static String getDynmapWorldName(String level) {
+        ServerLevel world = WorldUtils.getWorld(level);
+        if (world == null) {
+            FactionsMod.LOGGER.warn("[Dynmap] getDynmapWorldName: level='{}' not found in loaded worlds", level);
+            return null;
+        }
+
+        ResourceKey<Level> dim = world.dimension();
+        String result;
+        if (dim == Level.OVERWORLD) {
+            result = WorldUtils.server.getWorldData().getLevelName();
+        } else if (dim == Level.END) {
+            result = "DIM1";
+        } else if (dim == Level.NETHER) {
+            result = "DIM-1";
+        } else {
+            result = dim.identifier().getNamespace() + "_" + dim.identifier().getPath();
+        }
+        FactionsMod.LOGGER.info("[Dynmap] getDynmapWorldName: level='{}' -> dim='{}' -> dynmapWorld='{}'", level, dim, result);
+        return result;
     }
 
     private void clearMarkers() {
@@ -173,7 +250,9 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
             for (org.dynmap.markers.Marker m : allMarkers) {
                 m.deleteMarker();
             }
-            set.deleteMarkerSet();
+            // Keep the MarkerSet itself so dynmap can persist _markers_ JSON.
+            // Do NOT call set.deleteMarkerSet() — that would wipe the set and
+            // prevent dynmap from writing the marker JSON file clients read.
         }
     }
 
@@ -187,10 +266,17 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
             return;
         }
 
+        String dynmapWorld = getDynmapWorldName(home.level);
+        FactionsMod.LOGGER.info("[Dynmap] Home world mapping: level='{}' -> dynmapWorld='{}'", home.level, dynmapWorld);
+        if (dynmapWorld == null) {
+            FactionsMod.LOGGER.warn("[Dynmap] Skipping home marker for unknown world: " + home.level);
+            return;
+        }
+
         String homeId = faction.getID().toString() + "-home";
         org.dynmap.markers.Marker existing = set.findMarker(homeId);
         if (existing != null) {
-            existing.setLocation(home.level, home.x, 64.0, home.z);
+            existing.setLocation(dynmapWorld, home.x, 64.0, home.z);
             existing.setLabel(faction.getName() + "'s Home", true);
             existing.setDescription(getInfo(faction));
             return;
@@ -199,8 +285,8 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
         set.createMarker(
                 homeId,
                 faction.getName() + "'s Home",
-                true, // markup
-                home.level,
+                false, // markup (false = regular marker visible on HD maps)
+                dynmapWorld,
                 home.x, 64.0, home.z,
                 claimIcon,
                 true); // persistent
@@ -209,7 +295,9 @@ public class DynmapWrapper extends DynmapCommonAPIListener {
     private static int getColorRgb(Faction faction) {
         ChatFormatting formatting = ChatFormatting.getByName(faction.getColor().name().toLowerCase());
         Integer rgb = formatting == null ? null : formatting.getColor();
-        return rgb == null ? 0x00FFFFFF : rgb; // default white with alpha
+        // ChatFormatting colors are 24-bit RGB (0xRRGGBB); mask anyway to guarantee
+        // no alpha byte ever reaches the Dynmap marker API.
+        return rgb == null ? 0xFFFFFF : (rgb & 0xFFFFFF); // default white
     }
 
     private String getInfo(Faction faction) {
