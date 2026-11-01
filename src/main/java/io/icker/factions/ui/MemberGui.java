@@ -14,6 +14,7 @@ import io.icker.factions.util.Message;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.ProfileResolver;
 import net.minecraft.world.inventory.MenuType;
@@ -69,7 +70,21 @@ public class MemberGui extends PagedGui {
                             UUID.randomUUID(),
                             Localization.raw("factions.gui.generic.unknown_player", player));
 
-            GameProfile profile = resolver.fetchById(targetUser.getID()).orElse(unknownPlayer);
+            GameProfile profile =
+                    resolver.fetchById(targetUser.getID()).orElseGet(() -> {
+                        // Jugador online (no-premium): obtener su perfil real del servidor
+                        ServerPlayer targetPlayer =
+                                player.level().getServer().getPlayerList().getPlayer(targetUser.getID());
+                        if (targetPlayer != null) {
+                            return targetPlayer.getGameProfile();
+                        }
+                        // Jugador offline: usar el nombre guardado en User si lo tenemos
+                        String storedName = targetUser.getName();
+                        if (storedName != null && !storedName.isEmpty()) {
+                            return new GameProfile(targetUser.getID(), storedName);
+                        }
+                        return unknownPlayer;
+                    });
 
             var icon = new GuiElement(Items.PLAYER_HEAD);
             icon.setProfile(profile);
