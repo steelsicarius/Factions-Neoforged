@@ -28,6 +28,18 @@ import java.util.stream.Collectors;
 public class InfoGui extends FactionsMenu {
     protected final Runnable closeCallback;
 
+    private static String resolvePlayerName(
+            ProfileResolver resolver, ServerPlayer player, User u) {
+        return resolver.fetchById(u.getID())
+                .map(GameProfile::name)
+                .orElseGet(() -> {
+                    String storedName = u.getName();
+                    return storedName != null && !storedName.isEmpty()
+                            ? storedName
+                            : Localization.raw("factions.gui.generic.unknown_player", player);
+                });
+    }
+
     public InfoGui(ServerPlayer player, Faction faction, @Nullable Runnable closeCallback) {
         super(MenuType.GENERIC_9x1, player, 9);
         this.closeCallback = closeCallback;
@@ -42,16 +54,7 @@ public class InfoGui extends FactionsMenu {
         String owner =
                 members.stream()
                         .filter(u -> u.rank == User.Rank.OWNER)
-                        .map(
-                                u ->
-                                        resolver.fetchById(u.getID())
-                                                .orElse(
-                                                        new GameProfile(
-                                                                Util.NIL_UUID,
-                                                                Localization.raw(
-                                                                        "factions.gui.generic.unknown_player",
-                                                                        player)))
-                                                .name())
+                        .map(u -> resolvePlayerName(resolver, player, u))
                         .collect(Collectors.joining(", "));
 
         this.setTitle(Component.translatable("factions.gui.info.title"));
@@ -96,21 +99,12 @@ public class InfoGui extends FactionsMenu {
                         members.stream()
                                 .map(
                                         u ->
-                                                Component.literal(
-                                                                resolver.fetchById(u.getID())
-                                                                        .orElse(
-                                                                                new GameProfile(
-                                                                                        Util.NIL_UUID,
-                                                                                        Localization.raw(
-                                                                                                        "factions.gui.generic.unknown_player",
-                                                                                                        player)))
-                                                                        .name())
+                                                Component.literal(resolvePlayerName(resolver, player, u))
                                                         .setStyle(
                                                                 Style.EMPTY
                                                                         .withItalic(false)
                                                                         .withColor(
-                                                                               ChatFormatting
-                                                                                       .GRAY)))
+                                                                                ChatFormatting.GRAY)))
                                 .toList());
         if (membersLore.size() > 4) membersLore = membersLore.subList(0, 3);
         membersLore.add(Component.empty());
