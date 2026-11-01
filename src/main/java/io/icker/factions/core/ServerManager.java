@@ -35,6 +35,7 @@ public class ServerManager {
     private static void playerJoin(PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
         User user = User.get(player.getUUID());
+        user.setName(player.getName().getString());
 
         if (user.isInFaction()) {
             Faction faction = user.getFaction();
