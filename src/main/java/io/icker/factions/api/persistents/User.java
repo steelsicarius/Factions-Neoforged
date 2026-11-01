@@ -47,6 +47,10 @@ public class User {
     @Field("FactionID")
     private UUID factionID;
 
+    @Field("Name")
+    @Nullable
+    private String name;
+
     @Field("Rank")
     public Rank rank;
 
@@ -97,6 +101,15 @@ public class User {
 
     public UUID getID() {
         return id;
+    }
+
+    @Nullable
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean isInFaction() {
